@@ -105,7 +105,7 @@ const webapp = window.Telegram.WebApp;
  if (!initData) {
     showForbiddenError();
 } else {
-    initApp();
+    //initApp();
     switchView('map');
 }
  
