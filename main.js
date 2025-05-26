@@ -218,7 +218,10 @@ function enableMobilePinchZoom(videoElement) {
      odometerInput.classList.add('hidden');
      backButton.classList.add('hidden');
      odometer.value = '';
-     videoScale = 1;
+     
+    videoScale = 1;
+    video.style.transform = 'scale(1)';
+    sessionVideo.style.transform = 'scale(1)';
  }
  
  function capturePhoto(video, canvas) {
