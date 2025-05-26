@@ -158,7 +158,7 @@ function enableMobilePinchZoom(videoElement) {
  
      if (stream) stopCamera(); // 💡 предотвращаем повторный вызов
  
-     if (photoTaken) resetCameraView(videoElement, canvasEl, captureBtn);; // 💡 возможно, сделать reset по view
+     if (photoTaken) resetCameraView(); // 💡 возможно, сделать reset по view
  
      try {
          stream = await navigator.mediaDevices.getUserMedia({
@@ -210,19 +210,20 @@ function enableMobilePinchZoom(videoElement) {
      [captureButton, sessionCaptureButton].forEach(btn => btn.disabled = true);
  }
  
- function resetCameraView(videoElement = video, canvasElement = canvas, captureBtn = captureButton) {
-    photoTaken = false;
-    video.style.display = 'block';
-    canvas.style.display = 'none';
-    captureButton.style.display = 'block';
-    odometerInput.classList.add('hidden');
-    backButton.classList.add('hidden');
-    odometer.value = '';
-
+ function resetCameraView() {
+     photoTaken = false;
+     video.style.display = 'block';
+     canvas.style.display = 'none';
+     captureButton.style.display = 'block';
+     odometerInput.classList.add('hidden');
+     backButton.classList.add('hidden');
+     odometer.value = '';
+     
     videoScale = 1;
-    videoElement.style.transform = 'scale(1)'; // 
+    video.style.transform = 'scale(1)';
+    sessionVideo.style.transform = 'scale(1)';
  }
-    
+ 
  function capturePhoto(video, canvas) {
     const ctx = canvas.getContext('2d');
     const width = video.videoWidth;
@@ -336,8 +337,7 @@ function captureAndCropPhoto(video, canvas) {
          hideSpinner();
          hideReviewButtons();
 
-         resetCameraView(video, canvas, captureButton); // если пересъёмка камеры
-         resetCameraView(sessionVideo, sessionCanvas, sessionCaptureButton); // если пересъёмка сессии
+         resetCameraView();
          startCamera('camera');
  
          // Показываем nav-button
