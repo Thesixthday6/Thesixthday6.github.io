@@ -165,13 +165,17 @@ function enableMobilePinchZoom(videoElement) {
              video: { facingMode: 'environment' }
          });
          videoElement.srcObject = stream;
+
+         await new Promise(resolve => {
+            videoElement.onloadedmetadata = () => resolve();
+        });
  
          await videoElement.play().catch(err => {
              console.warn('Auto-play error:', err);
          });
 
          videoScale = 1;
-         
+
          enableMobilePinchZoom(videoElement);;
  
          if (view === 'camera') {
@@ -233,6 +237,9 @@ function enableMobilePinchZoom(videoElement) {
 
     // Рисуем только центральную часть видео, имитируя "зум"
     ctx.drawImage(video, sx, sy, scaledWidth, scaledHeight, 0, 0, width, height);
+
+    console.log('videoScale:', videoScale);
+    console.log('video.videoWidth:', video.videoWidth, 'video.videoHeight:', video.videoHeight);
 
     return canvas.toDataURL('image/jpeg');
 }
