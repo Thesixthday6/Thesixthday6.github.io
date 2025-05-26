@@ -167,9 +167,11 @@ function enableMobilePinchZoom(videoElement) {
          videoElement.srcObject = stream;
 
          await new Promise(resolve => {
-            videoElement.onloadedmetadata = () => resolve();
+            videoElement.onloadedmetadata = () => {
+                resolve();
+            };
         });
- 
+        
          await videoElement.play().catch(err => {
              console.warn('Auto-play error:', err);
          });
@@ -218,10 +220,7 @@ function enableMobilePinchZoom(videoElement) {
      odometerInput.classList.add('hidden');
      backButton.classList.add('hidden');
      odometer.value = '';
-     
-    videoScale = 1;
-    video.style.transform = 'scale(1)';
-    sessionVideo.style.transform = 'scale(1)';
+     videoScale = 1;
  }
  
  function capturePhoto(video, canvas) {
@@ -336,8 +335,6 @@ function captureAndCropPhoto(video, canvas) {
      backToCameraBtn.addEventListener('click', () => {
          hideSpinner();
          hideReviewButtons();
-
-         resetCameraView();
          startCamera('camera');
  
          // Показываем nav-button
