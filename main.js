@@ -133,6 +133,7 @@ function enableMobilePinchZoom(videoElement) {
             const currentDistance = getDistance(e.touches[0], e.touches[1]);
             const scaleChange = currentDistance / initialDistance;
             currentScale = Math.min(Math.max(1, initialScale * scaleChange), 3); // ограничиваем 1x–3x
+            videoScale = currentScale;
             videoElement.style.transform = `scale(${currentScale})`;
         }
     }, { passive: false });
@@ -169,6 +170,8 @@ function enableMobilePinchZoom(videoElement) {
              console.warn('Auto-play error:', err);
          });
 
+         videoScale = 1;
+         
          enableMobilePinchZoom(videoElement);;
  
          if (view === 'camera') {
@@ -211,6 +214,7 @@ function enableMobilePinchZoom(videoElement) {
      odometerInput.classList.add('hidden');
      backButton.classList.add('hidden');
      odometer.value = '';
+     videoScale = 1;
  }
  
  function capturePhoto(video, canvas) {
