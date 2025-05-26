@@ -116,39 +116,55 @@ switchView('map');
 
 function enableMobilePinchZoom(videoElement) {
     let initialDistance = null;
-    let initialScale = 1;
-    let currentScale = 1;
+    let initialScale = videoScale;  // читаем глобальную переменную
+    let currentScale = videoScale;
 
-    videoElement.addEventListener('touchstart', (e) => {
+    function onTouchStart(e) {
         if (e.touches.length === 2) {
             e.preventDefault();
             initialDistance = getDistance(e.touches[0], e.touches[1]);
             initialScale = currentScale;
         }
-    }, { passive: false });
+    }
 
-    videoElement.addEventListener('touchmove', (e) => {
+    function onTouchMove(e) {
         if (e.touches.length === 2 && initialDistance !== null) {
             e.preventDefault();
             const currentDistance = getDistance(e.touches[0], e.touches[1]);
             const scaleChange = currentDistance / initialDistance;
-            currentScale = Math.min(Math.max(1, initialScale * scaleChange), 3); // ограничиваем 1x–3x
+            currentScale = Math.min(Math.max(1, initialScale * scaleChange), 3);
             videoScale = currentScale;
             videoElement.style.transform = `scale(${currentScale})`;
         }
-    }, { passive: false });
+    }
 
-    videoElement.addEventListener('touchend', (e) => {
+    function onTouchEnd(e) {
         if (e.touches.length < 2) {
             initialDistance = null;
         }
-    });
-
-    function getDistance(touch1, touch2) {
-        const dx = touch1.clientX - touch2.clientX;
-        const dy = touch1.clientY - touch2.clientY;
-        return Math.hypot(dx, dy);
     }
+
+    // Сохраняем ссылки, чтобы потом удалить
+    videoElement._zoomHandlers = { onTouchStart, onTouchMove, onTouchEnd };
+
+    videoElement.addEventListener('touchstart', onTouchStart, { passive: false });
+    videoElement.addEventListener('touchmove', onTouchMove, { passive: false });
+    videoElement.addEventListener('touchend', onTouchEnd);
+}
+
+function disableMobilePinchZoom(videoElement) {
+    if (videoElement._zoomHandlers) {
+        const { onTouchStart, onTouchMove, onTouchEnd } = videoElement._zoomHandlers;
+        videoElement.removeEventListener('touchstart', onTouchStart);
+        videoElement.removeEventListener('touchmove', onTouchMove);
+        videoElement.removeEventListener('touchend', onTouchEnd);
+        delete videoElement._zoomHandlers;
+    }
+}
+
+function resetZoom(videoElement) {
+    videoScale = 1;
+    videoElement.style.transform = 'scale(1)';
 }
 
  async function startCamera(view) {
@@ -177,7 +193,10 @@ function enableMobilePinchZoom(videoElement) {
          videoScale = 1;
          
 
-         enableMobilePinchZoom(videoElement);;
+         if (videoElement) {
+            disableMobilePinchZoom(videoElement); // чтобы не было дублей
+            enableMobilePinchZoom(videoElement);  // заново
+}
 
          if (view === 'camera') {
              captureButton.classList.remove('hidden');
@@ -212,15 +231,17 @@ function enableMobilePinchZoom(videoElement) {
  }
 
  function resetCameraView() {
-     photoTaken = false;
-     video.style.display = 'block';
-     canvas.style.display = 'none';
-     captureButton.style.display = 'block';
-     odometerInput.classList.add('hidden');
-     backButton.classList.add('hidden');
-     odometer.value = '';
-     videoScale = 1;
- }
+    photoTaken = false;
+    video.style.display = 'block';
+    canvas.style.display = 'none';
+    captureButton.style.display = 'block';
+    odometerInput.classList.add('hidden');
+    backButton.classList.add('hidden');
+    odometer.value = '';
+
+    // Сброс зума
+    resetZoom(video);
+}
 
  function capturePhoto(video, canvas) {
     const ctx = canvas.getContext('2d');
