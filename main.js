@@ -102,12 +102,8 @@ const webapp = window.Telegram.WebApp;
      }
  }
 
- if (!initData) {
-    showForbiddenError();
-} else {
-    //initApp();
-    switchView('map');
-}
+switchView('map');
+
  
  function createDraggableMarker(latlng) {
      if (currentMarker) {
