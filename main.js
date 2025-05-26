@@ -47,6 +47,7 @@ const webapp = window.Telegram.WebApp;
  let stream = null;
  let photoTaken = false;
  let sessionPhotos = [];
+ let videoScale = 1; // новая переменная
  const REQUIRED_PHOTOS = 4;
  
  // 3. Initialize Map
@@ -217,33 +218,50 @@ function enableMobilePinchZoom(videoElement) {
     const width = video.videoWidth;
     const height = video.videoHeight;
 
-    // Устанавливаем размеры canvas как у видеопотока
     canvas.width = width;
     canvas.height = height;
 
-    // Просто рисуем весь кадр без кропа
-    ctx.drawImage(video, 0, 0, width, height);
+    // Учитываем масштаб: уменьшаем видимую зону и обрезаем по центру
+    const scaledWidth = width / videoScale;
+    const scaledHeight = height / videoScale;
+    const sx = (width - scaledWidth) / 2;
+    const sy = (height - scaledHeight) / 2;
 
-    // Возвращаем base64-изображение
+    // Рисуем только центральную часть видео, имитируя "зум"
+    ctx.drawImage(video, sx, sy, scaledWidth, scaledHeight, 0, 0, width, height);
+
     return canvas.toDataURL('image/jpeg');
 }
  
- function captureAndCropPhoto(video, canvas) {
-     const ctx = canvas.getContext('2d');
-     const width = video.videoWidth;
-     const height = video.videoHeight;
- 
-     const cropWidth = width; // например, 80% от ширины
-     const cropHeight = height; // например, центр экрана
-     const cropX = (width - cropWidth) / 2;
-     const cropY = (height - cropHeight) / 2;
- 
-     canvas.width = cropWidth;
-     canvas.height = cropHeight;
-     ctx.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
- 
-     return canvas.toDataURL('image/jpeg');
- }
+function captureAndCropPhoto(video, canvas) {
+    const ctx = canvas.getContext('2d');
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+
+    // Учитываем зум: уменьшаем область захвата
+    const scaledWidth = width / videoScale;
+    const scaledHeight = height / videoScale;
+
+    // Обрезаем центральную часть с учетом масштаба
+    const cropX = (width - scaledWidth) / 2;
+    const cropY = (height - scaledHeight) / 2;
+
+    const cropWidth = scaledWidth;
+    const cropHeight = scaledHeight;
+
+    // Устанавливаем размеры canvas для финального изображения
+    canvas.width = cropWidth;
+    canvas.height = cropHeight;
+
+    // Рисуем нужную зону
+    ctx.drawImage(
+        video,
+        cropX, cropY, cropWidth, cropHeight, // что вырезать из видео
+        0, 0, cropWidth, cropHeight           // куда отрисовать на canvas
+    );
+
+    return canvas.toDataURL('image/jpeg');
+}
  
  
  function updateSessionUI() {
