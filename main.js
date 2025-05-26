@@ -335,6 +335,11 @@ function captureAndCropPhoto(video, canvas) {
          hideSpinner();
          hideReviewButtons();
          startCamera('camera');
+         const container = document.getElementById('camera-container'); // или другой контейнер камеры
+         if (container) {
+            container.style.transform = `scale(${videoScale})`;
+            container.scrollTop = 0;
+        }
 
          // Показываем nav-button
          document.querySelector('.nav-tabs').classList.remove('hidden');
