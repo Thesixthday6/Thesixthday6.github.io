@@ -336,6 +336,9 @@ function captureAndCropPhoto(video, canvas) {
      backToCameraBtn.addEventListener('click', () => {
          hideSpinner();
          hideReviewButtons();
+
+         resetCameraView();
+         
          startCamera('camera');
  
          // Показываем nav-button
