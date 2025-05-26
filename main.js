@@ -158,7 +158,7 @@ function enableMobilePinchZoom(videoElement) {
  
      if (stream) stopCamera(); // 💡 предотвращаем повторный вызов
  
-     if (photoTaken) resetCameraView(videoElement); // 💡 возможно, сделать reset по view
+     if (photoTaken) resetCameraView(videoElement, canvasEl, captureBtn);; // 💡 возможно, сделать reset по view
  
      try {
          stream = await navigator.mediaDevices.getUserMedia({
@@ -210,7 +210,7 @@ function enableMobilePinchZoom(videoElement) {
      [captureButton, sessionCaptureButton].forEach(btn => btn.disabled = true);
  }
  
- function resetCameraView(videoElement = video) {
+ function resetCameraView(videoElement = video, canvasElement = canvas, captureBtn = captureButton) {
     photoTaken = false;
     video.style.display = 'block';
     canvas.style.display = 'none';
@@ -336,8 +336,8 @@ function captureAndCropPhoto(video, canvas) {
          hideSpinner();
          hideReviewButtons();
 
-         resetCameraView(video);
-         
+         resetCameraView(video, canvas, captureButton); // если пересъёмка камеры
+         resetCameraView(sessionVideo, sessionCanvas, sessionCaptureButton); // если пересъёмка сессии
          startCamera('camera');
  
          // Показываем nav-button
