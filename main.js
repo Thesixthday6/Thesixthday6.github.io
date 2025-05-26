@@ -112,7 +112,43 @@ switchView('map');
      currentMarker = L.marker(latlng, { draggable: true }).addTo(map);
      continueButton.classList.remove('hidden');
  }
- 
+
+function enableMobilePinchZoom(videoElement) {
+    let initialDistance = null;
+    let initialScale = 1;
+    let currentScale = 1;
+
+    videoElement.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+            e.preventDefault();
+            initialDistance = getDistance(e.touches[0], e.touches[1]);
+            initialScale = currentScale;
+        }
+    }, { passive: false });
+
+    videoElement.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2 && initialDistance !== null) {
+            e.preventDefault();
+            const currentDistance = getDistance(e.touches[0], e.touches[1]);
+            const scaleChange = currentDistance / initialDistance;
+            currentScale = Math.min(Math.max(1, initialScale * scaleChange), 3); // ограничиваем 1x–3x
+            videoElement.style.transform = `scale(${currentScale})`;
+        }
+    }, { passive: false });
+
+    videoElement.addEventListener('touchend', (e) => {
+        if (e.touches.length < 2) {
+            initialDistance = null;
+        }
+    });
+
+    function getDistance(touch1, touch2) {
+        const dx = touch1.clientX - touch2.clientX;
+        const dy = touch1.clientY - touch2.clientY;
+        return Math.hypot(dx, dy);
+    }
+}
+
  async function startCamera(view) {
      const videoElement = view === 'session' ? sessionVideo : video;
      const captureBtn = view === 'session' ? sessionCaptureButton : captureButton;
@@ -131,6 +167,8 @@ switchView('map');
          await videoElement.play().catch(err => {
              console.warn('Auto-play error:', err);
          });
+
+         enableMobilePinchZoom(videoElement);;
  
          if (view === 'camera') {
              captureButton.classList.remove('hidden');
