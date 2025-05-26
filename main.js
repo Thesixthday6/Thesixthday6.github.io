@@ -1,14 +1,14 @@
 const webapp = window.Telegram.WebApp;
  webapp.ready();
  webapp.expand();
-  
+
  // Get signed initData string
  const initData = webapp.initData;
 
  // Set theme variables from Telegram theme params
  const params = webapp.themeParams;
  const root = document.documentElement;
- 
+
  if (params) {
      root.style.setProperty('--tg-theme-bg-color', params.bg_color);
      root.style.setProperty('--tg-theme-text-color', params.text_color);
@@ -17,7 +17,7 @@ const webapp = window.Telegram.WebApp;
      root.style.setProperty('--tg-theme-button-color', params.button_color);
      root.style.setProperty('--tg-theme-button-text-color', params.button_text_color);
  }
- 
+
  // 2. DOM Elements and Variables
  const navButtons = document.querySelectorAll('.nav-button');
  const views = document.querySelectorAll('.view');
@@ -40,46 +40,46 @@ const webapp = window.Telegram.WebApp;
  const chatId = urlParams.get('chat_id');
  const msgId  = urlParams.get('msg_id');
  const carId  = urlParams.get('car_id');
- 
+
  const action = urlParams.get('action') || 'start';
- 
+
  let currentMarker = null;
  let stream = null;
  let photoTaken = false;
  let sessionPhotos = [];
  let videoScale = 1; // новая переменная
  const REQUIRED_PHOTOS = 4;
- 
+
  // 3. Initialize Map
  const map = L.map('map').setView([51.505, -0.09], 13);
  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
      attribution: '© OpenStreetMap contributors'
  }).addTo(map);
- 
+
  odometer.addEventListener('keydown', (e) => {
      if (e.key === 'Enter') {
          e.preventDefault();
-         
+
          if (!odometer.value) {
              showError('Пожалуйста, введите показания одометра');
              return;
          }
-         
+
          // Добавляем вибрацию
          if (window.Telegram?.WebApp?.HapticFeedback) {
              Telegram.WebApp.HapticFeedback.impactOccurred('light');
          }
-         
+
          switchView('session');
      }
  });
- 
+
  // 4. Utility Functions
  function showError(message) {
      errorMessage.textContent = message;
      errorMessage.style.display = 'block';
  }
- 
+
  function switchView(view) {
      hideSpinner();
      navButtons.forEach(btn => {
@@ -88,16 +88,16 @@ const webapp = window.Telegram.WebApp;
      views.forEach(v => {
          v.classList.toggle('active', v.id === `${view}View`);
      });
- 
+
      // Всегда показываем nav-button при переключении вкладок
      document.querySelector('.nav-tabs').classList.remove('hidden');
- 
+
      if (view === 'camera' || view === 'session') {
          startCamera(view);
      } else {
          stopCamera();
      }
- 
+
      if (view === 'session') {
          updateSessionUI();
      }
@@ -105,7 +105,7 @@ const webapp = window.Telegram.WebApp;
 
 switchView('map');
 
- 
+
  function createDraggableMarker(latlng) {
      if (currentMarker) {
          map.removeLayer(currentMarker);
@@ -155,11 +155,11 @@ function enableMobilePinchZoom(videoElement) {
      const videoElement = view === 'session' ? sessionVideo : video;
      const captureBtn = view === 'session' ? sessionCaptureButton : captureButton;
      const canvasEl = view === 'session' ? sessionCanvas : canvas;
- 
+
      if (stream) stopCamera(); // 💡 предотвращаем повторный вызов
- 
+
      if (photoTaken) resetCameraView(); // 💡 возможно, сделать reset по view
- 
+
      try {
          stream = await navigator.mediaDevices.getUserMedia({
              video: { facingMode: 'environment' }
@@ -167,33 +167,32 @@ function enableMobilePinchZoom(videoElement) {
          videoElement.srcObject = stream;
 
          await new Promise(resolve => {
-            videoElement.onloadedmetadata = () => {
-                resolve();
-            };
+            videoElement.onloadedmetadata = () => resolve();
         });
-        
+
          await videoElement.play().catch(err => {
              console.warn('Auto-play error:', err);
          });
 
          videoScale = 1;
+         
 
          enableMobilePinchZoom(videoElement);;
- 
+
          if (view === 'camera') {
              captureButton.classList.remove('hidden');
              captureButton.style.opacity = '1';
              captureButton.style.display = '';
              captureButton.disabled = false;
          }
- 
+
          if (view === 'session') {
              sessionCaptureButton.disabled = false;
              sessionCaptureButton.classList.remove('hidden');
              sessionCaptureButton.style.opacity = '1';
              sessionCaptureButton.style.display = 'block';
          }
- 
+
          videoElement.style.display = 'block';
          canvasEl.style.display = 'none';
      } catch (err) {
@@ -202,7 +201,7 @@ function enableMobilePinchZoom(videoElement) {
          captureBtn.disabled = true;
      }
  }
- 
+
  function stopCamera() {
      if (stream) {
          stream.getTracks().forEach(track => track.stop());
@@ -211,7 +210,7 @@ function enableMobilePinchZoom(videoElement) {
      [video, sessionVideo].forEach(v => v.srcObject = null);
      [captureButton, sessionCaptureButton].forEach(btn => btn.disabled = true);
  }
- 
+
  function resetCameraView() {
      photoTaken = false;
      video.style.display = 'block';
@@ -222,7 +221,7 @@ function enableMobilePinchZoom(videoElement) {
      odometer.value = '';
      videoScale = 1;
  }
- 
+
  function capturePhoto(video, canvas) {
     const ctx = canvas.getContext('2d');
     const width = video.videoWidth;
@@ -245,7 +244,7 @@ function enableMobilePinchZoom(videoElement) {
 
     return canvas.toDataURL('image/jpeg');
 }
- 
+
 function captureAndCropPhoto(video, canvas) {
     const ctx = canvas.getContext('2d');
     const width = video.videoWidth;
@@ -275,8 +274,8 @@ function captureAndCropPhoto(video, canvas) {
 
     return canvas.toDataURL('image/jpeg');
 }
- 
- 
+
+
  function updateSessionUI() {
      photoCounter.innerHTML = '';
      for (let i = 0; i < REQUIRED_PHOTOS; i++) {
@@ -293,78 +292,78 @@ function captureAndCropPhoto(video, canvas) {
          photoCounter.appendChild(slot);
      }
  }
- 
+
  function showNotification(message) {
      const notification = document.createElement('div');
      notification.className = 'notification';
      notification.textContent = message;
      document.body.appendChild(notification);
- 
+
      notification.offsetHeight;
      notification.classList.add('show');
- 
+
      setTimeout(() => {
          notification.classList.remove('show');
          setTimeout(() => notification.remove(), 300);
      }, 2000);
  }
- 
+
  function showSpinner() {
      const el = document.getElementById('photoStatus');
      el.classList.remove('hidden', 'check');
      el.querySelector('.spinner').style.display = 'block';
  }
- 
+
  function hideSpinner() {
      document.getElementById('photoStatus').classList.add('hidden');
  }
- 
+
  function showCheckmark() {
      const el = document.getElementById('photoStatus');
      el.classList.add('check');
      el.querySelector('.spinner').style.display = 'none';
  }
- 
- 
+
+
  function hideReviewButtons() {
      document.getElementById('reviewButtons').classList.add('hidden');
  }
- 
+
  const backToCameraBtn = document.getElementById('backToCamera');
  if (backToCameraBtn) {
      backToCameraBtn.addEventListener('click', () => {
          hideSpinner();
          hideReviewButtons();
          startCamera('camera');
- 
+
          // Показываем nav-button
          document.querySelector('.nav-tabs').classList.remove('hidden');
- 
+
          // Возвращаем отображение captureButton
          captureButton.classList.remove('hidden');
          captureButton.disabled = false;
          captureButton.style.display = 'block';
      });
  }
- 
+
  let reviewHandlerAttached = false;
- 
+
  function showReviewButtons() {
      const btn = document.getElementById('submitOdometerPhoto');
- 
+
      if (!reviewHandlerAttached) {
          btn.addEventListener('click', handleSubmitPhoto);
          reviewHandlerAttached = true;
      }
- 
+
      document.getElementById('reviewButtons').classList.remove('hidden');
  }
- 
- 
+
+
  let recognizedOdometer = null;
  let lastOdometerPhoto = null;
  let lastRecognizedOdometerPhoto = null; 
- 
+
  async function uploadOdometerPhoto(base64Photo, recognizedPhotoBase64, carId, odometerValue, initData) {
     try {
       const response = await fetch("https://autopark-gthost.amvera.io/api/odometer", {
@@ -380,10 +379,10 @@ function captureAndCropPhoto(video, canvas) {
           odometer_value: odometerValue || null
         })
       });
-  
+
       const result = await response.json();
       if (!response.ok) throw new Error(result.detail || "Failed to upload odometer photo");
-  
+
       console.log("📸 Фото успешно загружено:", result);
       return result;
     } catch (error) {
@@ -391,7 +390,7 @@ function captureAndCropPhoto(video, canvas) {
       return null;
     }
   }  
- 
+
 
 async function handleSubmitPhoto() {
     showSpinner();
@@ -462,7 +461,7 @@ async function handleSubmitPhoto() {
      // Только после того, как мы точно получили ответ:
      setTimeout(() => webapp.close(), 100);
    }
- 
+
 async function sendSessionData() {
     if (!initData) {
         showError('❌ Не удалось получить данные Telegram.');
@@ -532,12 +531,12 @@ async function sendSessionData() {
         showError('⚠️ Ошибка соединения с сервером');
     }
 }
- 
+
  function showForbiddenError() {
      document.querySelector('.container').classList.add('hidden');
      document.getElementById('forbiddenPage').classList.remove('hidden');
  }
- 
+
  // 5. Event Listeners
  navButtons.forEach(button => {
      button.addEventListener('click', () => {
@@ -545,15 +544,15 @@ async function sendSessionData() {
          switchView(view);
      });
  });
- 
+
  map.on('click', e => createDraggableMarker(e.latlng));
- 
+
  locationButton.addEventListener('click', () => {
      if (!navigator.geolocation) {
          showError('Geolocation is not supported by your browser.');
          return;
      }
- 
+
      navigator.geolocation.getCurrentPosition(
          ({ coords }) => {
              createDraggableMarker([coords.latitude, coords.longitude]);
@@ -562,27 +561,27 @@ async function sendSessionData() {
          () => showError('Please enable location services to continue.')
      );
  });
- 
+
  captureButton.addEventListener('click', () => {
      const croppedPhoto = captureAndCropPhoto(video, canvas);
      stopCamera();
      canvas.style.display = 'block';
      video.style.display = 'none';
      captureButton.style.display = 'none';
- 
+
      // Скрываем nav-button
      document.querySelector('.nav-tabs').classList.add('hidden');
-     
+
      showReviewButtons();
  });
- 
+
  sessionCaptureButton.addEventListener('click', () => {
      const photoData = capturePhoto(sessionVideo, sessionCanvas);
      if (sessionPhotos.length < REQUIRED_PHOTOS) {
          sessionPhotos.push(photoData);
      }
      updateSessionUI();
- 
+
      if (sessionPhotos.length === REQUIRED_PHOTOS) {
          showNotification('📤 Отправка данных...');
          setTimeout(() => sendSessionData(), 1000);
@@ -590,18 +589,18 @@ async function sendSessionData() {
          setTimeout(() => startCamera('session'), 500);
      }
  });
- 
+
  continueButton.addEventListener('click', () => switchView('camera'));
  backButton.addEventListener('click', () => startCamera('camera'));
- 
+
  odometer.addEventListener('input', () => {
      continueToPhotos.disabled = !odometer.value;
  });
- 
+
  continueToPhotos.addEventListener('click', () => {
      if (odometer.value) switchView('session');
  });
- 
+
  // 6. Initialize Application
  function initApp() {
     fetch(`https://autopark-gthost.amvera.io/api/auth?car_id=${carId}&action=${action}`, {
@@ -628,5 +627,4 @@ async function sendSessionData() {
         alert('Ошибка авторизации.');
         alert(err);
         setTimeout(() => webapp.close(), 2000);
-    });
-}
+        })};
