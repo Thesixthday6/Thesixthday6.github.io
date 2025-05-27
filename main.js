@@ -217,7 +217,6 @@ function resetZoom(videoElement) {
         if (videoElement) {
             alert(`current videoElement ${videoElement}`)
             alert('🔍 Reinitializing mobile pinch zoom...');
-            disableMobilePinchZoom(videoElement);
             enableMobilePinchZoom(videoElement);
         }
 
