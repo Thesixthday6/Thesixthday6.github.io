@@ -331,25 +331,21 @@ function captureAndCropPhoto(video, canvas) {
 
  const backToCameraBtn = document.getElementById('backToCamera');
  if (backToCameraBtn) {
-     backToCameraBtn.addEventListener('click', () => {
-         hideSpinner();
-         hideReviewButtons();
-         startCamera('camera');
-         const container = document.getElementById('camera-container'); // или другой контейнер камеры
-         if (container) {
-            container.style.transform = `scale(${videoScale})`;
-            container.scrollTop = 0;
-        }
+    backToCameraBtn.addEventListener('click', () => {
+        hideSpinner();
+        hideReviewButtons();
 
-         // Показываем nav-button
-         document.querySelector('.nav-tabs').classList.remove('hidden');
+        videoScale = 1;
+        video.style.transform = 'scale(1)';
 
-         // Возвращаем отображение captureButton
-         captureButton.classList.remove('hidden');
-         captureButton.disabled = false;
-         captureButton.style.display = 'block';
-     });
- }
+        startCamera('camera');
+
+        document.querySelector('.nav-tabs').classList.remove('hidden');
+        captureButton.classList.remove('hidden');
+        captureButton.disabled = false;
+        captureButton.style.display = 'block';
+    });
+}
 
  let reviewHandlerAttached = false;
 
