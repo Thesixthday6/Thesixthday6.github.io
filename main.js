@@ -116,135 +116,91 @@ switchView('map');
 
 function enableMobilePinchZoom(videoElement) {
     let initialDistance = null;
-    let initialScale = videoScale;  // читаем глобальную переменную
-    let currentScale = videoScale;
+    let initialScale = 1;
+    let currentScale = 1;
 
-    function onTouchStart(e) {
+    videoElement.addEventListener('touchstart', (e) => {
         if (e.touches.length === 2) {
             e.preventDefault();
             initialDistance = getDistance(e.touches[0], e.touches[1]);
             initialScale = currentScale;
         }
-    }
+    }, { passive: false });
 
-    function onTouchMove(e) {
+    videoElement.addEventListener('touchmove', (e) => {
         if (e.touches.length === 2 && initialDistance !== null) {
             e.preventDefault();
             const currentDistance = getDistance(e.touches[0], e.touches[1]);
             const scaleChange = currentDistance / initialDistance;
-            currentScale = Math.min(Math.max(1, initialScale * scaleChange), 3);
+            currentScale = Math.min(Math.max(1, initialScale * scaleChange), 3); // ограничиваем 1x–3x
             videoScale = currentScale;
             videoElement.style.transform = `scale(${currentScale})`;
         }
-    }
+    }, { passive: false });
 
-    function onTouchEnd(e) {
+    videoElement.addEventListener('touchend', (e) => {
         if (e.touches.length < 2) {
             initialDistance = null;
         }
+    });
+
+    function getDistance(touch1, touch2) {
+        const dx = touch1.clientX - touch2.clientX;
+        const dy = touch1.clientY - touch2.clientY;
+        return Math.hypot(dx, dy);
     }
-
-    // Сохраняем ссылки, чтобы потом удалить
-    videoElement._zoomHandlers = { onTouchStart, onTouchMove, onTouchEnd };
-
-    videoElement.addEventListener('touchstart', onTouchStart, { passive: false });
-    videoElement.addEventListener('touchmove', onTouchMove, { passive: false });
-    videoElement.addEventListener('touchend', onTouchEnd);
-}
-
-function disableMobilePinchZoom(videoElement) {
-    if (videoElement._zoomHandlers) {
-        const { onTouchStart, onTouchMove, onTouchEnd } = videoElement._zoomHandlers;
-        videoElement.removeEventListener('touchstart', onTouchStart);
-        videoElement.removeEventListener('touchmove', onTouchMove);
-        videoElement.removeEventListener('touchend', onTouchEnd);
-        delete videoElement._zoomHandlers;
-    }
-}
-
-function resetZoom(videoElement) {
-    videoScale = 1;
-    videoElement.style.transform = `scale(${videoScale})`;
 }
 
  async function startCamera(view) {
-    alert(`🚀 startCamera called with view = ${view}`);
+     const videoElement = view === 'session' ? sessionVideo : video;
+     const captureBtn = view === 'session' ? sessionCaptureButton : captureButton;
+     const canvasEl = view === 'session' ? sessionCanvas : canvas;
 
-    const videoElement = view === 'session' ? sessionVideo : video;
-    const captureBtn = view === 'session' ? sessionCaptureButton : captureButton;
-    const canvasEl = view === 'session' ? sessionCanvas : canvas;
+     if (stream) stopCamera(); // 💡 предотвращаем повторный вызов
 
-    alert(`🎯 videoElement = ${videoElement?.id || '[unknown]'}`);
-    alert(`🎯 captureBtn = ${captureBtn?.id || '[unknown]'}`);
-    alert(`🎯 canvasEl = ${canvasEl?.id || '[unknown]'}`);
+     if (photoTaken) resetCameraView(); // 💡 возможно, сделать reset по view
 
-    if (stream) {
-        alert('🛑 Existing stream found. Stopping camera...');
-        stopCamera();
-    }
+     try {
+         stream = await navigator.mediaDevices.getUserMedia({
+             video: { facingMode: 'environment' }
+         });
+         videoElement.srcObject = stream;
 
-    if (photoTaken) {
-        alert('🔄 Photo was taken previously. Resetting camera view...');
-        resetCameraView();
-    }
-
-    try {
-        alert('📷 Requesting access to camera...');
-        stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment' }
+         await new Promise(resolve => {
+            videoElement.onloadedmetadata = () => resolve();
         });
 
-        alert('✅ Access granted. Attaching stream to video element...');
-        videoElement.srcObject = stream;
+         await videoElement.play().catch(err => {
+             console.warn('Auto-play error:', err);
+         });
 
-        alert('⏳ Waiting for video metadata to load...');
-        await new Promise(resolve => {
-            videoElement.onloadedmetadata = () => {
-                alert('📦 Metadata loaded.');
-                resolve();
-            };
-        });
+         videoScale = 1;
+         
 
-        alert('▶️ Attempting to play video...');
-        await videoElement.play().catch(err => {
-            alert(`⚠️ Auto-play error: ${err}`);
-        });
+         enableMobilePinchZoom(videoElement);;
 
-        videoScale = 1;
-        alert(`🔧 videoScale reset to ${videoScale}`);
-        alert(`current scale == ${videoScale}`)
+         if (view === 'camera') {
+             captureButton.classList.remove('hidden');
+             captureButton.style.opacity = '1';
+             captureButton.style.display = '';
+             captureButton.disabled = false;
+         }
 
-        if (videoElement) {
-            alert(`current videoElement ${videoElement}`)
-            alert('🔍 Reinitializing mobile pinch zoom...');
-            enableMobilePinchZoom(videoElement);
-        }
+         if (view === 'session') {
+             sessionCaptureButton.disabled = false;
+             sessionCaptureButton.classList.remove('hidden');
+             sessionCaptureButton.style.opacity = '1';
+             sessionCaptureButton.style.display = 'block';
+         }
 
-        if (view === 'camera') {
-            alert('📸 Preparing capture button for camera view...');
-            captureButton.classList.remove('hidden');
-            captureButton.style.opacity = '1';
-            captureButton.style.display = '';
-            captureButton.disabled = false;
-        }
-
-        if (view === 'session') {
-            alert('📸 Preparing capture button for session view...');
-            sessionCaptureButton.disabled = false;
-            sessionCaptureButton.classList.remove('hidden');
-            sessionCaptureButton.style.opacity = '1';
-            sessionCaptureButton.style.display = 'block';
-        }
-
-        videoElement.style.display = 'block';
-        canvasEl.style.display = 'none';
-        alert('✅ Video is visible, canvas is hidden.');
-    } catch (err) {
-        alert(`❌ Camera error: ${err}`);
-        showError('Не удалось получить доступ к камере. Разрешите доступ и попробуйте снова.');
-        captureBtn.disabled = true;
-    }
-}
+         videoElement.style.display = 'block';
+         canvasEl.style.display = 'none';
+     } catch (err) {
+         console.error('Camera error:', err);
+         showError('Не удалось получить доступ к камере. Разрешите доступ и попробуйте снова.');
+         captureBtn.disabled = true;
+     }
+ }
 
  function stopCamera() {
      if (stream) {
@@ -256,17 +212,15 @@ function resetZoom(videoElement) {
  }
 
  function resetCameraView() {
-    photoTaken = false;
-    video.style.display = 'block';
-    canvas.style.display = 'none';
-    captureButton.style.display = 'block';
-    odometerInput.classList.add('hidden');
-    backButton.classList.add('hidden');
-    odometer.value = '';
-
-    // Сброс зума
-    resetZoom(video);
-}
+     photoTaken = false;
+     video.style.display = 'block';
+     canvas.style.display = 'none';
+     captureButton.style.display = 'block';
+     odometerInput.classList.add('hidden');
+     backButton.classList.add('hidden');
+     odometer.value = '';
+     videoScale = 1;
+ }
 
  function capturePhoto(video, canvas) {
     const ctx = canvas.getContext('2d');
