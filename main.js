@@ -212,8 +212,10 @@ function resetZoom(videoElement) {
 
         videoScale = 1;
         alert(`🔧 videoScale reset to ${videoScale}`);
+        alert(`current scale == ${videoScale}`)
 
         if (videoElement) {
+            alert(`current videoElement ${videoElement}`)
             alert('🔍 Reinitializing mobile pinch zoom...');
             disableMobilePinchZoom(videoElement);
             enableMobilePinchZoom(videoElement);
