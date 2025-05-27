@@ -384,10 +384,10 @@ function captureAndCropPhoto(video, canvas) {
       const result = await response.json();
       if (!response.ok) throw new Error(result.detail || "Failed to upload odometer photo");
 
-      console.log("📸 Фото успешно загружено:", result);
+      alert("📸 Фото успешно загружено:", result); //тут на месте alert был console.log
       return result;
     } catch (error) {
-      console.error("❌ Ошибка загрузки фото одометра:", error);
+      alert("❌ Ошибка загрузки фото одометра:", error); //а тут console.error
       return null;
     }
   }  
@@ -404,6 +404,13 @@ async function handleSubmitPhoto() {
 
         const base64image = canvas.toDataURL('image/jpeg');
         lastOdometerPhoto = base64image;
+        const imageWindow = window.open();
+        const img = new Image();
+        img.src = base64image;
+        img.style.maxWidth = '100%';
+        img.onload = () => {
+            imageWindow.document.body.appendChild(img);
+        };
 
         // Только распознаем одометр, не сохраняем в S3
         const res = await fetch('https://autopark-gthost.amvera.io/api/odometer/recognize', {
