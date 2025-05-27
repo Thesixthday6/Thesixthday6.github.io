@@ -164,62 +164,86 @@ function disableMobilePinchZoom(videoElement) {
 
 function resetZoom(videoElement) {
     videoScale = 1;
-    videoElement.style.transform = 'scale(1)';
+    videoElement.style.transform = `scale(${videoScale})`;
 }
 
  async function startCamera(view) {
-     const videoElement = view === 'session' ? sessionVideo : video;
-     const captureBtn = view === 'session' ? sessionCaptureButton : captureButton;
-     const canvasEl = view === 'session' ? sessionCanvas : canvas;
+    alert(`🚀 startCamera called with view = ${view}`);
 
-     if (stream) stopCamera(); // 💡 предотвращаем повторный вызов
+    const videoElement = view === 'session' ? sessionVideo : video;
+    const captureBtn = view === 'session' ? sessionCaptureButton : captureButton;
+    const canvasEl = view === 'session' ? sessionCanvas : canvas;
 
-     if (photoTaken) resetCameraView(); // 💡 возможно, сделать reset по view
+    alert(`🎯 videoElement = ${videoElement?.id || '[unknown]'}`);
+    alert(`🎯 captureBtn = ${captureBtn?.id || '[unknown]'}`);
+    alert(`🎯 canvasEl = ${canvasEl?.id || '[unknown]'}`);
 
-     try {
-         stream = await navigator.mediaDevices.getUserMedia({
-             video: { facingMode: 'environment' }
-         });
-         videoElement.srcObject = stream;
+    if (stream) {
+        alert('🛑 Existing stream found. Stopping camera...');
+        stopCamera();
+    }
 
-         await new Promise(resolve => {
-            videoElement.onloadedmetadata = () => resolve();
+    if (photoTaken) {
+        alert('🔄 Photo was taken previously. Resetting camera view...');
+        resetCameraView();
+    }
+
+    try {
+        alert('📷 Requesting access to camera...');
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' }
         });
 
-         await videoElement.play().catch(err => {
-             console.warn('Auto-play error:', err);
-         });
+        alert('✅ Access granted. Attaching stream to video element...');
+        videoElement.srcObject = stream;
 
-         videoScale = 1;
-         
+        alert('⏳ Waiting for video metadata to load...');
+        await new Promise(resolve => {
+            videoElement.onloadedmetadata = () => {
+                alert('📦 Metadata loaded.');
+                resolve();
+            };
+        });
 
-         if (videoElement) {
-            disableMobilePinchZoom(videoElement); // чтобы не было дублей
-            enableMobilePinchZoom(videoElement);  // заново
+        alert('▶️ Attempting to play video...');
+        await videoElement.play().catch(err => {
+            alert(`⚠️ Auto-play error: ${err}`);
+        });
+
+        videoScale = 1;
+        alert(`🔧 videoScale reset to ${videoScale}`);
+
+        if (videoElement) {
+            alert('🔍 Reinitializing mobile pinch zoom...');
+            disableMobilePinchZoom(videoElement);
+            enableMobilePinchZoom(videoElement);
+        }
+
+        if (view === 'camera') {
+            alert('📸 Preparing capture button for camera view...');
+            captureButton.classList.remove('hidden');
+            captureButton.style.opacity = '1';
+            captureButton.style.display = '';
+            captureButton.disabled = false;
+        }
+
+        if (view === 'session') {
+            alert('📸 Preparing capture button for session view...');
+            sessionCaptureButton.disabled = false;
+            sessionCaptureButton.classList.remove('hidden');
+            sessionCaptureButton.style.opacity = '1';
+            sessionCaptureButton.style.display = 'block';
+        }
+
+        videoElement.style.display = 'block';
+        canvasEl.style.display = 'none';
+        alert('✅ Video is visible, canvas is hidden.');
+    } catch (err) {
+        alert(`❌ Camera error: ${err}`);
+        showError('Не удалось получить доступ к камере. Разрешите доступ и попробуйте снова.');
+        captureBtn.disabled = true;
+    }
 }
-
-         if (view === 'camera') {
-             captureButton.classList.remove('hidden');
-             captureButton.style.opacity = '1';
-             captureButton.style.display = '';
-             captureButton.disabled = false;
-         }
-
-         if (view === 'session') {
-             sessionCaptureButton.disabled = false;
-             sessionCaptureButton.classList.remove('hidden');
-             sessionCaptureButton.style.opacity = '1';
-             sessionCaptureButton.style.display = 'block';
-         }
-
-         videoElement.style.display = 'block';
-         canvasEl.style.display = 'none';
-     } catch (err) {
-         console.error('Camera error:', err);
-         showError('Не удалось получить доступ к камере. Разрешите доступ и попробуйте снова.');
-         captureBtn.disabled = true;
-     }
- }
 
  function stopCamera() {
      if (stream) {
